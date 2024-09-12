@@ -1,0 +1,32 @@
+/* styles.css */
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+}
+
+.image-container {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+img {
+    max-height: 90%;  /* Adjust based on the space you want to leave for buttons */
+    max-width: 100%;
+    object-fit: contain;
+}
+
+.navigation {
+    position: absolute;
+    top: 10px;
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    padding: 0 20px;
+}
+
