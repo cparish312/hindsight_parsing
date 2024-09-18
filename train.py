@@ -43,6 +43,6 @@ if __name__ == "__main__":
     model = YOLO("yolov8m.pt")
     results = model.train(data=config_f, epochs=30, device="mps", rect=True, 
                           augment=False, close_mosaic=0, batch=15, scale=0, 
-                          translate=0, project=project_dir, name=project
+                          translate=0, project=project_run_dir, name=project
                           )
 
