@@ -12,10 +12,12 @@ sys.path.insert(0, "../hindsight/hindsight_server/")
 from db import HindsightDB
 from utils import make_dir
 
-project = "tweet_parse-2024-09-18-18-04-7d5636ed"
+project = "tweet_parse-2024-09-19-17-46-d20a4703"
 
-PROJECTS_DIR = os.path.abspath("/Users/connorparish/code/hindsight_parsing/playground/data_augmentation/tweet_clipping/data/")
-MODELS_RUN_DIR = os.path.abspath("/Users/connorparish/code/hindsight_parsing/playground/data_augmentation/tweet_clipping/runs/")
+# PROJECTS_DIR = os.path.abspath("/Users/connorparish/code/hindsight_parsing/playground/data_augmentation/tweet_clipping/data/")
+# MODELS_RUN_DIR = os.path.abspath("/Users/connorparish/code/hindsight_parsing/playground/data_augmentation/tweet_clipping/runs/")
+PROJECTS_DIR = os.path.abspath("/Users/connorparish/code/hindsight_parsing/data/label_studio/")
+MODELS_RUN_DIR = os.path.abspath("/Users/connorparish/code/hindsight_parsing/data/runs/")
 
 project_dir = os.path.join(PROJECTS_DIR, project)
 project_run_dir = os.path.join(MODELS_RUN_DIR, project)
@@ -40,8 +42,13 @@ def create_config(project_dir):
 if __name__ == "__main__":
     config_f = create_config(project_dir)
 
-    model = YOLO("yolov8m.pt")
-    results = model.train(data=config_f, epochs=30, device="mps", rect=True, 
+    model_f = os.path.join(project_run_dir, f"{project}/weights/last.pt")
+    if os.path.exists(model_f):
+        print("Loading existing model", model_f)
+        model = YOLO(model_f)
+    else:
+        model = YOLO("yolov8m.pt")
+    results = model.train(data=config_f, epochs=10, device="mps", rect=True, 
                           augment=False, close_mosaic=0, batch=15, scale=0, 
                           translate=0, project=project_run_dir, name=project
                           )

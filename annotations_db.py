@@ -39,9 +39,11 @@ class HindsightAnnotationsDB:
     def create_tables(self):
         with self.get_connection() as conn:
             cursor = conn.cursor()
+
             cursor.execute('''CREATE TABLE IF NOT EXISTS object_detection_annotations (
                             id INTEGER PRIMARY KEY,
-                            frame_id INTEGER NOT NULL,
+                            frame_id INTEGER,
+                            parent_annotation_id INTEGER,
                             x DOUBLE NOT NULL,
                             y DOUBLE NOT NULL,
                             w DOUBLE NOT NULL,
@@ -55,15 +57,20 @@ class HindsightAnnotationsDB:
                            )
             ''')
 
+            conn.commit()
+
+
+
     @with_lock
-    def insert_annotation(self, frame_id, x, y, w, h, rotation, label, conf, model_name, model_version=None, model_file_hash=None):
+    def insert_annotation(self, x, y, w, h, rotation, label, conf, model_name, 
+                          model_version=None, model_file_hash=None, frame_id=None, parent_annotation_id=None):
         """Insert a new annotation into the database."""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('''INSERT INTO object_detection_annotations 
-                            (frame_id, x, y, w, h, rotation, label, conf, model_name, model_version, model_file_hash) 
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                            (frame_id, x, y, w, h, rotation, label, conf, model_name, model_version, model_file_hash))
+                            (frame_id, parent_annotation_id, x, y, w, h, rotation, label, conf, model_name, model_version, model_file_hash) 
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                            (frame_id, parent_annotation_id, x, y, w, h, rotation, label, conf, model_name, model_version, model_file_hash))
             conn.commit()
 
     @with_lock

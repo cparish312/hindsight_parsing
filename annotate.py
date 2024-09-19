@@ -25,11 +25,12 @@ annotation_db = HindsightAnnotationsDB()
 def annotate_images(frames):
     images = [Image.open(f) for f in frames['path']]
 
-    results = trained_model(images)
+    results = trained_model(images, device="mps")
     for result in results:
         frame_row = frames.loc[frames['path'] == result.path].iloc[0]
         if len(result.boxes) == 0:
-            annotation_db.insert_annotation(int(frame_row['id']), 0, 0, 0, 0, 0, None, 0, model_name, model_version, model_file_hash)
+            annotation_db.insert_annotation(frame_id=int(frame_row['id']), x=0, y=0, w=0, h=0, rotation=0,
+                                             label=None, conf=0, model_name=model_name, model_version=model_version, model_file_hash=model_file_hash)
         for i, box in enumerate(result.boxes):
             x = float(box.xyxy[0][0])
             y = float(box.xyxy[0][1])
@@ -40,9 +41,10 @@ def annotate_images(frames):
             conf = float(box.conf[0])
 
             # Insert annotation into the database
-            annotation_db.insert_annotation(int(frame_row['id']), x, y, w, h, rotation, label, conf, model_name, model_version, model_file_hash)
+            annotation_db.insert_annotation(frame_id=int(frame_row['id']), x=x, y=y, w=w, h=h, rotation=rotation,
+                                             label=label, conf=conf, model_name=model_name, model_version=model_version, model_file_hash=model_file_hash)
 
-def annotate_images_batches(frames, batch_size=50):
+def annotate_images_batches(frames, batch_size=200):
     num_batches = len(frames) // batch_size + (1 if len(frames) % batch_size > 0 else 0)
     for i in range(num_batches):
         print(f"Annotation Batch {i} out of {num_batches}")
@@ -58,6 +60,5 @@ if __name__ == "__main__":
     all_annotations = annotation_db.get_annotations()
     annotations = all_annotations.loc[all_annotations['model_file_hash'] == model_file_hash]
     annotations_frame_ids = set(annotations['frame_id'])
-    frames = frames.tail(8000)
     frames = frames.loc[~frames['id'].isin(annotations_frame_ids)]
     annotate_images_batches(frames)
