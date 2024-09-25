@@ -12,7 +12,7 @@ sys.path.insert(0, "../hindsight/hindsight_server/")
 from db import HindsightDB
 from utils import make_dir
 
-project = "tweet_parse-2024-09-19-17-46-d20a4703"
+project = "tweet_parse-2024-09-21-01-13-dc3535d9"
 
 # PROJECTS_DIR = os.path.abspath("/Users/connorparish/code/hindsight_parsing/playground/data_augmentation/tweet_clipping/data/")
 # MODELS_RUN_DIR = os.path.abspath("/Users/connorparish/code/hindsight_parsing/playground/data_augmentation/tweet_clipping/runs/")
@@ -48,8 +48,13 @@ if __name__ == "__main__":
         model = YOLO(model_f)
     else:
         model = YOLO("yolov8m.pt")
-    results = model.train(data=config_f, epochs=10, device="mps", rect=True, 
-                          augment=False, close_mosaic=0, batch=15, scale=0, 
+
+    # results = model.train(data=config_f, epochs=20, device="cpu", rect=True, 
+    #                     augment=False, close_mosaic=0, batch=10, scale=0, erasing=0, fliplr=0,
+    #                     translate=0, project=project_run_dir, name=project,
+    #                     )
+    results = model.train(data=config_f, epochs=40, device="mps", rect=True, 
+                          augment=False, close_mosaic=0, batch=10, scale=0, 
                           translate=0, project=project_run_dir, name=project
                           )
 

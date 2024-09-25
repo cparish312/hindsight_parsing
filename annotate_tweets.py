@@ -5,15 +5,17 @@ import json
 from ultralytics import YOLO
 from annotations_db import HindsightAnnotationsDB 
 
+from annotation_helpers import get_entity_image, add_hindsight_frame_path
+
 import sys
 sys.path.insert(0, "../hindsight/hindsight_server/")
 
 from db import HindsightDB
 from utils import make_dir, hash_file
     
-MODEL_PATH = '/Users/connorparish/code/hindsight_parsing/data/runs/tweet_parse-2024-09-19-17-46-d20a4703/tweet_parse-2024-09-19-17-46-d20a47032/weights/best.pt'
+MODEL_PATH = '/Users/connorparish/code/hindsight_parsing/data/runs/tweet_parse-2024-09-21-01-13-dc3535d9/tweet_parse-2024-09-21-01-13-dc3535d9/weights/best.pt'
 model_name = 'YOLOv8_tweet_parse'
-model_version = 'v0.0'
+model_version = 'v0.1'
 model_file_hash = str(hash_file(MODEL_PATH))
 
 # Initialize the YOLO model
@@ -22,18 +24,12 @@ trained_model = YOLO(MODEL_PATH)
 db = HindsightDB()
 annotation_db = HindsightAnnotationsDB()
 
-def get_entity_image(entity_row):
-    im = Image.open(entity_row['frame_path'])
-    e = im.crop([entity_row['x'], entity_row['y'], entity_row['x2'], entity_row['y2']])
-    e.filename = str(entity_row['id'])
-    return e
-
 def annotate_entities(entities):
     images = list()
     for i, entity_row in entities.iterrows():
         images.append(get_entity_image(entity_row=entity_row))
 
-    results = trained_model(images, device="mps")
+    results = trained_model(images, stream=True)
     for result in results:
         entity_row = entities.loc[entities['id'] == int(result.path)].iloc[0]
         if len(result.boxes) == 0:
@@ -68,7 +64,12 @@ def tweet_complete(row):
     all_im_annotations = set(im_annotations['label'])
     y_min = complete_y_min
     y_max = complete_y_max
-    if "twitter_top_menu" in all_im_annotations:
+
+    if "more_posted" in all_im_annotations:
+        y_min += im_annotations.loc[im_annotations['label'] == "more_posted"].iloc[0]['y2']
+    elif "new_posts" in all_im_annotations:
+        y_min += im_annotations.loc[im_annotations['label'] == "new_posts"].iloc[0]['y2']
+    elif "twitter_top_menu" in all_im_annotations:
         y_min += im_annotations.loc[im_annotations['label'] == "twitter_top_menu"].iloc[0]['y2']
     
     if "twitter_bottom_menu" in all_im_annotations:
@@ -90,9 +91,7 @@ if __name__ == "__main__":
     already_processed_parent_ids = set(all_annotations.loc[all_annotations['model_file_hash'] == model_file_hash]['parent_annotation_id'])
     annotations = annotations.loc[~annotations['id'].isin(already_processed_parent_ids)]
 
-    frames = db.get_frames(frame_ids=set(annotations['frame_id']), impute_applications=False)
-    frame_id_to_path = {f : p for f, p in zip(frames['id'], frames['path'])}
-    annotations['frame_path'] = annotations['frame_id'].map(frame_id_to_path)
+    annotations = add_hindsight_frame_path(annotations)
 
     annotations['x2'] = annotations['x'] + annotations['w']
     annotations['y2'] = annotations['y'] + annotations['h']

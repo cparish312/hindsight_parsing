@@ -25,7 +25,7 @@ annotation_db = HindsightAnnotationsDB()
 def annotate_images(frames):
     images = [Image.open(f) for f in frames['path']]
 
-    results = trained_model(images, device="mps")
+    results = trained_model(images, device="mps", stream=True)
     for result in results:
         frame_row = frames.loc[frames['path'] == result.path].iloc[0]
         if len(result.boxes) == 0:
